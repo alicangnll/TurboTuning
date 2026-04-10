@@ -37,3 +37,5 @@ models/
 docs/archive/
 .claudeignore
 *.tqr
+*.txt
+llama-cpp-turboquant-original/

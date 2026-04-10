@@ -44,6 +44,12 @@ def run_benchmark(name: str, cmd: List[str], env: dict) -> Dict[str, float]:
     # Send /exit to stdin to ensure llama-cli exits if it defaults to interactive mode
     stdout, stderr = process.communicate(input="/exit\n")
     raw_output = stdout + stderr
+
+    # Print to user so they see progress
+    for line in raw_output.split('\n'):
+        if "[ Prompt:" in line or "llama_print_timings" in line or "llama_new_context_with_model" in line:
+             pass # Skip spamming to console
+    # Actually, we don't need to print everything. 
     
     # Strip ANSI escape codes to ensure clean regex matching
     output = re.sub(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])', '', raw_output)
@@ -53,25 +59,27 @@ def run_benchmark(name: str, cmd: List[str], env: dict) -> Dict[str, float]:
         
     results = {}
     
-    prompt_eval_re = re.search(r"prompt eval time.*?=\s*[\d.]+\s*ms\s*/.*?,\s*([\d.]+)\s*tokens per second", output)
+    # Try classic timings first
+    prompt_eval_re = re.findall(r"prompt eval time.*?=\s*[\d.]+\s*ms\s*/.*?,\s*([\d.]+)\s*tokens per second", output, re.IGNORECASE)
     if prompt_eval_re:
-        results["prompt_eval_tokens_per_sec"] = float(prompt_eval_re.group(1))
+        results["prompt_eval_tokens_per_sec"] = float(prompt_eval_re[-1])
     else:
-        prompt_alt_re = re.search(r"\[ Prompt:\s+([\d.]+)\s+t/s", output)
+        # Fallback to interactive bar
+        prompt_alt_re = re.findall(r"\[\s*Prompt:\s*([\d.]+)\s*t/s", output, re.IGNORECASE)
         if prompt_alt_re:
-            results["prompt_eval_tokens_per_sec"] = float(prompt_alt_re.group(1))
+            results["prompt_eval_tokens_per_sec"] = float(prompt_alt_re[-1])
 
-    eval_re = re.search(r"eval time.*?=\s*[\d.]+\s*ms\s*/.*?,\s*([\d.]+)\s*tokens per second", output)
+    eval_re = re.findall(r"eval time.*?=\s*[\d.]+\s*ms\s*/.*?,\s*([\d.]+)\s*tokens per second", output, re.IGNORECASE)
     if eval_re:
-        results["eval_tokens_per_sec"] = float(eval_re.group(1))
+        results["eval_tokens_per_sec"] = float(eval_re[-1])
     else:
-        eval_alt_re = re.search(r"\|\s*Generation:\s+([\d.]+)\s+t/s", output)
+        eval_alt_re = re.findall(r"\|\s*Generation:\s*([\d.]+)\s*t/s", output, re.IGNORECASE)
         if eval_alt_re:
-            results["eval_tokens_per_sec"] = float(eval_alt_re.group(1))
+            results["eval_tokens_per_sec"] = float(eval_alt_re[-1])
         
-    calc_re = re.search(r"compute buffer total size =\s*([\d.]+)\s*MiB", output)
+    calc_re = re.findall(r"compute buffer total size =\s*([\d.]+)\s*MiB", output, re.IGNORECASE)
     if calc_re:
-        results["llama_compute_buffer_mb"] = float(calc_re.group(1))
+        results["llama_compute_buffer_mb"] = float(calc_re[-1])
         
     if can_run_time_cmd():
         if platform.system() == "Darwin":
@@ -86,9 +94,9 @@ def run_benchmark(name: str, cmd: List[str], env: dict) -> Dict[str, float]:
     return results
 
 def print_results_table(all_results: Dict[str, Dict[str, float]], config_names: List[str]):
-    print("\n" + "="*95)
-    print(" " * 35 + "BENCHMARK RESULTS")
-    print("="*95)
+    print("\n" + "="*80)
+    print(" " * 30 + "BENCHMARK RESULTS")
+    print("="*80)
     
     header = f"{'Metric':<20} | " + " | ".join([f"{name:<15}" for name in config_names])
     print(header)
@@ -97,7 +105,6 @@ def print_results_table(all_results: Dict[str, Dict[str, float]], config_names: 
     metrics = [
         ("prompt_eval_tokens_per_sec", "Prefill (t/s)"),
         ("eval_tokens_per_sec", "Generation (t/s)"),
-        ("llama_compute_buffer_mb", "Compute Buf(MB)"),
         ("max_rss_mb", "Peak Mem (MB)")
     ]
     
@@ -108,7 +115,7 @@ def print_results_table(all_results: Dict[str, Dict[str, float]], config_names: 
             val_str = f"{val:.2f}" if val is not None else "N/A"
             row += f"{val_str:<15} | "
         print(row[:-3])
-    print("="*95 + "\n")
+    print("="*80 + "\n")
 
 def plot_results(all_results: Dict[str, Dict[str, float]], config_names: List[str], model_path: str):
     if not MATPLOTLIB_AVAILABLE:
@@ -119,13 +126,11 @@ def plot_results(all_results: Dict[str, Dict[str, float]], config_names: List[st
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
     
-    # Custom colors
-    colors = ['#7f7f7f', '#1f77b4', '#2ca02c', '#ff7f0e']
+    colors = ['#7f7f7f', '#2ca02c']
     
-    # --- Speed Chart ---
     labels_speed = ['Prefill (t/s)', 'Generation (t/s)']
     x_speed = np.arange(len(labels_speed))
-    width = 0.2
+    width = 0.35
     
     for i, name in enumerate(config_names):
         speed_vals = [all_results[name].get('prompt_eval_tokens_per_sec', 0),
@@ -140,7 +145,6 @@ def plot_results(all_results: Dict[str, Dict[str, float]], config_names: List[st
     ax1.legend()
     ax1.grid(axis='y', linestyle='--', alpha=0.7)
     
-    # --- Memory Chart ---
     labels_mem = ['Peak System RAM (MB)']
     x_mem = np.arange(len(labels_mem))
     
@@ -163,7 +167,7 @@ def plot_results(all_results: Dict[str, Dict[str, float]], config_names: List[st
     model_size = match.group(1).upper() if match else "Unknown"
     title_suffix = f" ({model_size} Model)" if model_size != "Unknown" else ""
     
-    plt.suptitle(f'TurboTuning Architecture Benchmarks{title_suffix}', y=1.05, fontsize=15, fontweight='bold')
+    plt.suptitle(f'TurboTuning vs Baseline Benchmarks{title_suffix}', y=1.05, fontsize=15, fontweight='bold')
     
     filename_size = f"_{model_size.lower()}" if model_size != "Unknown" else ""
     output_filename = f"benchmark_results{filename_size}.png"
@@ -179,7 +183,8 @@ def main():
     default_cli = os.path.join(project_root, "llama-cpp-turboquant", "build", "bin", "llama-cli")
     default_model = os.path.join(project_root, "models", "Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf")
 
-    parser.add_argument("--model", type=str, default=default_model, help="Path to the GGUF model")
+    parser.add_argument("--model", type=str, help="Path to a custom GGUF model (overrides --size)")
+    parser.add_argument("--size", type=str, choices=["0.5B", "8B", "32B", "70B", "104B", "all"], default="8B", help="Run benchmark on specific built-in model size or 'all'")
     parser.add_argument("--prompt", type=str, default="Write a 300 word essay about the future of artificial intelligence in space exploration. Be creative and very detailed.", help="Prompt for benchmarking")
     parser.add_argument("--n-predict", type=int, default=256, help="Number of tokens to generate")
     parser.add_argument("--n-ctx", type=int, default=4096, help="Context size")
@@ -193,48 +198,79 @@ def main():
         print(f"Error: llama-cli not found at '{args.llama_cli}'. Please compile it first.")
         sys.exit(1)
         
-    if not os.path.exists(args.model):
-        print(f"Error: Model not found at '{args.model}'. Please run a demo script to download the model.")
-        sys.exit(1)
-        
-    base_cmd = [
-        args.llama_cli,
-        "-m", args.model,
-        "-p", args.prompt,
-        "-n", str(args.n_predict),
-        "-c", str(args.n_ctx),
-        "-t", str(args.threads),
-        "-ngl", str(args.ngl),
-        "--no-display-prompt"
-    ]
-    
+    MODEL_PRESETS = {
+        "0.5B": "qwen2.5-0.5b-q4_k_m.gguf",
+        "8B": "Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf",
+        "32B": "Qwen2.5-32B-Instruct-Q4_K_M.gguf",
+        "70B": "Meta-Llama-3.1-70B-Instruct-Q4_K_M.gguf",
+        "104B": "c4ai-command-r-plus-08-2024.Q2_K.gguf"
+    }
+
+    to_run = []
+    if args.model:
+        if not os.path.exists(args.model):
+            print(f"Error: Model not found at '{args.model}'.")
+            sys.exit(1)
+        to_run.append(("Custom", args.model))
+    elif args.size == "all":
+        to_run = [(k, os.path.join(project_root, "models", v)) for k, v in MODEL_PRESETS.items()]
+    else:
+        to_run = [(args.size, os.path.join(project_root, "models", MODEL_PRESETS[args.size]))]
+
     env = os.environ.copy()
     
-    run_configs = {
-        "Baseline": base_cmd,
-        "TurboQuant+": base_cmd + [
-            "--cache-type-k", "turbo4",
-            "--cache-type-v", "turbo3",
-            "--no-turbo-async"
-        ],
-        "LLMTuning": base_cmd + [
-            "--turbo-async"
-        ],
-        "TurboTuning": base_cmd + [
-            "--cache-type-k", "turbo4",
-            "--cache-type-v", "turbo3",
-            "--turbo-async"
-        ]
-    }
-    
-    config_names = list(run_configs.keys())
-    all_results = {}
-    
-    for name in config_names:
-        all_results[name] = run_benchmark(name, run_configs[name], env)
+    for size_label, m_path in to_run:
+        if not os.path.exists(m_path):
+            print(f"--------------------------------------------------")
+            print(f"Skipping {size_label} test: model file not found -> {os.path.basename(m_path)}")
+            print(f"Run one of the demo scripts to download it first.")
+            print(f"--------------------------------------------------\n")
+            continue
+
+        print(f"\n========================================================")
+        print(f"    BENCHMARKING PIPELINE FOR MODEL: {size_label} ")
+        print(f"========================================================")
         
-    print_results_table(all_results, config_names)
-    plot_results(all_results, config_names, args.model)
+        turbo_cmd = [
+            args.llama_cli,
+            "-m", m_path,
+            "-p", args.prompt,
+            "-n", str(args.n_predict),
+            "-c", str(args.n_ctx),
+            "-t", str(args.threads),
+            "-ngl", str(args.ngl),
+            "--no-display-prompt",
+            "--simple-io"
+        ]
+        
+        baseline_cli = os.environ.get("BASELINE_CLI")
+        if not baseline_cli:
+            project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            baseline_cli = os.path.join(project_root, "llama-cpp-turboquant-original", "build", "bin", "llama-cli")
+            if not os.path.exists(baseline_cli):
+                print(f"Warning: Baseline CLI not found at '{baseline_cli}'. Falling back to default llama-cli.")
+                baseline_cli = args.llama_cli
+
+        baseline_cmd = turbo_cmd.copy()
+        baseline_cmd[0] = baseline_cli
+
+        run_configs = {
+            "Baseline": baseline_cmd,
+            "TurboTuning": turbo_cmd + [
+                "--cache-type-k", "turbo4",
+                "--cache-type-v", "turbo3",
+                "--turbo-async"
+            ]
+        }
+        
+        config_names = list(run_configs.keys())
+        all_results = {}
+        
+        for name in config_names:
+            all_results[name] = run_benchmark(name, run_configs[name], env)
+            
+        print_results_table(all_results, config_names)
+        plot_results(all_results, config_names, m_path)
 
 if __name__ == "__main__":
     main()

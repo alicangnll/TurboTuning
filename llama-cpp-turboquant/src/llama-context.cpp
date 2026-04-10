@@ -3730,7 +3730,7 @@ bool llama_context::tuning_eval_callback(struct ggml_tensor * t, bool ask, void 
     if (ask) return true; // PRE-OP: Continue
 
     // POST-OP: Sub-layer or Layer finished?
-    if (ctx->tuning_session) {
+    if (ctx->tuning_session && ctx->n_queued_tokens > 1) {
         // [PULSE PHASE 1] End of Attention
         auto it_attn = ctx->attn_ends.find(t);
         if (it_attn != ctx->attn_ends.end()) {

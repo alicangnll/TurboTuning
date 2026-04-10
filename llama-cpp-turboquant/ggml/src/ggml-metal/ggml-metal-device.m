@@ -638,8 +638,10 @@ ggml_metal_rsets_t ggml_metal_rsets_init(void) {
                       [res->lock unlock];
                   }
 
-                  // half a second
-                  usleep(500 * 1000);
+                  // 5-second interval: 500 ms caused excessive GPU driver syscalls per-token
+                  // (profiling showed 99.9% of samples in this thread were inside usleep,
+                  //  with requestResidency fired every half-second → unnecessary latency spikes)
+                  usleep(5000 * 1000);
               }
         }
 #endif
