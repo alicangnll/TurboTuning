@@ -63,7 +63,8 @@ echo "4) Qwen 2.5 0.5B Instruct (~400 MB)"
 echo "5) Llama-3-405B / 500B Class"
 echo "6) GPT 20B (OpenAI OSS-20B Class - ~12 GB)"
 echo "8) Qwen 2.5 Coder 7B/8B (~5 GB)"
-read -p "Your choice (1/2/3/4/5/6/8) [Default: 4]: " model_choice
+echo "9) Llama 3.1 70B Instruct (~40 GB)"
+read -p "Your choice (1/2/3/4/5/6/8/9) [Default: 4]: " model_choice
 model_choice=${model_choice:-4}
 
 mkdir -p $ROOT_DIR/models
@@ -104,6 +105,12 @@ case "$model_choice" in
     MODEL_URL="https://huggingface.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF/resolve/main/Qwen2.5-Coder-7B-Instruct-Q4_K_M.gguf"
     MODEL_FILE="$ROOT_DIR/models/Qwen2.5-Coder-7B-Instruct-Q4_K_M.gguf"
     CHAT_TEMPLATE="chatml"
+    ;;
+  9|"70B"|"70b")
+    MODEL_NAME="Llama 3.1 70B Instruct"
+    MODEL_URL="https://huggingface.co/bartowski/Meta-Llama-3.1-70B-Instruct-GGUF/resolve/main/Meta-Llama-3.1-70B-Instruct-Q4_K_M.gguf"
+    MODEL_FILE="$ROOT_DIR/models/Meta-Llama-3.1-70B-Instruct-Q4_K_M.gguf"
+    CHAT_TEMPLATE="llama3"
     ;;
   *)
     MODEL_NAME="Qwen 2.5 0.5B"

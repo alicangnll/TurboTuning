@@ -65,7 +65,8 @@ echo "4) Qwen 2.5 0.5B Instruct (~400 MB)"
 echo "6) GPT 20B (OpenAI OSS-20B Class - ~12 GB)"
 echo "7) Gemma 4 31B (Google - ~18 GB)"
 echo "8) Qwen 2.5 Coder 7B/8B (~5 GB)"
-read -p "Your choice (1/2/3/4/6/7/8) [Default: 1]: " model_choice
+echo "9) Llama 3.1 70B Instruct (~40 GB)"
+read -p "Your choice (1/2/3/4/6/7/8/9) [Default: 1]: " model_choice
 model_choice=${model_choice:-1}
 
 # Model Mapping
@@ -76,6 +77,7 @@ case "$model_choice" in
   6) MODEL_NAME="GPT 20B OSS"; MODEL_URL="https://huggingface.co/bartowski/openai_gpt-oss-20b-GGUF/resolve/main/openai_gpt-oss-20b-Q4_K_M.gguf"; MODEL_FILE="models/openai_gpt-oss-20b-Q4_K_M.gguf"; CHAT_TEMPLATE="none" ;;
   7) MODEL_NAME="Gemma 4 31B"; MODEL_URL="https://huggingface.co/unsloth/gemma-4-31B-it-GGUF/resolve/main/gemma-4-31B-it-Q4_K_M.gguf"; MODEL_FILE="models/gemma-4-31B-it-Q4_K_M.gguf"; CHAT_TEMPLATE="gemma" ;;
   8) MODEL_NAME="Qwen 2.5 Coder 7B"; MODEL_URL="https://huggingface.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF/resolve/main/Qwen2.5-Coder-7B-Instruct-Q4_K_M.gguf"; MODEL_FILE="models/Qwen2.5-Coder-7B-Instruct-Q4_K_M.gguf"; CHAT_TEMPLATE="chatml" ;;
+  9) MODEL_NAME="Llama 3.1 70B"; MODEL_URL="https://huggingface.co/bartowski/Meta-Llama-3.1-70B-Instruct-GGUF/resolve/main/Meta-Llama-3.1-70B-Instruct-Q4_K_M.gguf"; MODEL_FILE="models/Meta-Llama-3.1-70B-Instruct-Q4_K_M.gguf"; CHAT_TEMPLATE="llama3" ;;
   *) MODEL_NAME="Qwen 0.5B"; MODEL_URL="https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf"; MODEL_FILE="models/qwen2.5-0.5b-q4_k_m.gguf"; CHAT_TEMPLATE="chatml" ;;
 esac
 

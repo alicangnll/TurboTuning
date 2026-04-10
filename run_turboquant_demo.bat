@@ -72,8 +72,9 @@ echo 4^) Qwen 2.5 0.5B Instruct ^(~400 MB^)
 echo 5^) Llama-3-405B / 500B Class ^(~250 GB^)
 echo 6^) GPT 20B ^(MoE - ~12 GB^)
 echo 8^) Qwen 2.5 Coder 7B/8B ^(~5 GB^)
+echo 9^) Llama 3.1 70B Instruct ^(~40 GB^)
 
-set /p model_choice="Your choice (1/2/3/4/5/6) [Default: 4]: "
+set /p model_choice="Your choice (1/2/3/4/5/6/8/9) [Default: 4]: "
 if "%model_choice%"=="" set model_choice=4
 
 if not exist "models" mkdir models
@@ -102,6 +103,10 @@ if "%model_choice%"=="1" (
     set MODEL_NAME=Qwen 2.5 Coder 7B
     set MODEL_URL=https://huggingface.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF/resolve/main/Qwen2.5-Coder-7B-Instruct-Q4_K_M.gguf
     set MODEL_FILE=models\Qwen2.5-Coder-7B-Instruct-Q4_K_M.gguf
+) else if "%model_choice%"=="9" (
+    set MODEL_NAME=Llama 3.1 70B
+    set MODEL_URL=https://huggingface.co/bartowski/Meta-Llama-3.1-70B-Instruct-GGUF/resolve/main/Meta-Llama-3.1-70B-Instruct-Q4_K_M.gguf
+    set MODEL_FILE=models\Meta-Llama-3.1-70B-Instruct-Q4_K_M.gguf
 ) else (
     set MODEL_NAME=Qwen 2.5 0.5B
     set MODEL_URL=https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf
@@ -137,6 +142,7 @@ if "%model_choice%"=="2" set NGL=24
 if "%model_choice%"=="3" set NGL=15
 if "%model_choice%"=="5" set NGL=5
 if "%model_choice%"=="6" set NGL=12
+if "%model_choice%"=="9" set NGL=15
 if "%mem_choice%"=="3" if "%model_choice%"=="1" set NGL=32
 
 echo ^>>> Memory Mode: %MEM_LABEL%
