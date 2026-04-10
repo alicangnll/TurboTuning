@@ -1,7 +1,7 @@
 # TurboTuning
 ### Extreme-Efficiency Inference Engine for Large Language Models
 
-> **TurboTuning** is a system-level inference framework that enables 70B+ parameter language models to run on commodity hardware through two orthogonal techniques: **TurboQuant+** (KV cache compression via Walsh-Hadamard rotation and scalar quantization) and **LLMTuning** (model-weight memory virtualization via OS-level page management). The two modules are independent and composable.
+> **TurboTuning** is a system-level inference framework that enables 70B+ parameter language models to run on commodity hardware through two orthogonal techniques: **TurboQuant+** [[1]](https://github.com/TheTom/turboquant_plus) (KV cache compression via Walsh-Hadamard rotation and scalar quantization) and **LLMTuning** (model-weight memory virtualization via OS-level page management). The two modules are independent and composable.
 
 [Architecture & Design](MAP.md) | [Memory Analysis](docs/memory-rss-targets.md) | [Roadmap](PLAN.md)
 
@@ -28,7 +28,7 @@ Running large language models (LLMs) locally is constrained by two independent b
 
 ## Module 1 — TurboQuant+ (KV Cache Compression)
 
-TurboQuant+ implements the **PolarQuant** algorithm (arXiv 2504.19874). It operates on the attention key and value tensors written to the KV cache during each forward pass.
+TurboQuant+ implements the **PolarQuant** algorithm [[2]](https://arxiv.org/abs/2504.19874). It operates on the attention key and value tensors written to the KV cache during each forward pass.
 
 ### Step 1: Walsh-Hadamard Transform
 
@@ -201,6 +201,13 @@ The demo scripts compile the engine, present a model menu, download if needed, r
 | GPT 20B Q4_K_M | ~12 GB | No chat template |
 | Gemma 4 31B Q4_K_M | ~18 GB | macOS only |
 | Qwen 2.5 Coder 7B Q4_K_M | ~5 GB | Code tasks |
+
+---
+
+## References
+
+1. Turney, T. (2026). *TurboQuant+: Extreme-Efficiency Inference Engine for Large Language Models*. GitHub repository. [https://github.com/TheTom/turboquant_plus](https://github.com/TheTom/turboquant_plus)
+2. *PolarQuant Algorithm*. ICLR 2026. (arXiv:2504.19874)
 
 ---
 

@@ -1,7 +1,7 @@
 # TurboQuant+ // LLMTuning
 ### 2026 Yerel LLM Çıkarımı İçin Ekstrem Verimlilik Motoru
 
-> **TurboQuant+** ve **LLMTuning** iki bağımsız ama tamamlayıcı teknolojidir. TurboQuant+ KV önbelleğini sıkıştırır, her token daha az bellek kullanır. LLMTuning model ağırlıklarını sanallaştırır, fiziksel RAM'den büyük katmanlar bile çalışabilir. Her ikisini ayrı ayrı ya da birlikte kullanabilirsiniz.
+> **TurboQuant+** [[1]](https://github.com/TheTom/turboquant_plus) ve **LLMTuning** iki bağımsız ama tamamlayıcı teknolojidir. TurboQuant+ KV önbelleğini sıkıştırır, her token daha az bellek kullanır. LLMTuning model ağırlıklarını sanallaştırır, fiziksel RAM'den büyük katmanlar bile çalışabilir. Her ikisini ayrı ayrı ya da birlikte kullanabilirsiniz.
 
 [Mimari Harita](MAP.md) | [Bellek / RSS Hedefleri](docs/memory-rss-targets.md) | [Yol Haritası](PLAN.md) | [English Guide](README.md)
 
@@ -22,7 +22,7 @@
 
 ## Direk 1: TurboQuant+ (KV Önbellek Sıkıştırma)
 
-TurboQuant+, ICLR 2026 makalesinden (arXiv 2504.19874) PolarQuant algoritmasını uygular. KV önbellek belleğini 2,5× ile 6,4× arasında neredeyse kayıpsız kaliteyle azaltır.
+TurboQuant+, ICLR 2026 makalesinden (arXiv 2504.19874) PolarQuant algoritmasını [[2]](https://arxiv.org/abs/2504.19874) uygular. KV önbellek belleğini 2,5× ile 6,4× arasında neredeyse kayıpsız kaliteyle azaltır.
 
 ### Nasıl çalışır — adım adım
 
@@ -200,6 +200,13 @@ Demo betikleri aşağıdaki modeller için önceden yapılandırılmış profill
 - **Ultra-Eco Modu**: 16GB sistemlerde 8B modeller ~1,5GB tepe RSS ile çalışıyor
 - **Yüksek Bağlam**: 128GB MacBook'ta 128K bağlamda 104B modeller
 - **Düşük RAM Kararlılığı**: 24GB M2/M3 çiplerinde 70B modellerin kararlı çıkarımı
+
+---
+
+## Kaynakça
+
+1. Turney, T. (2026). *TurboQuant+: Extreme-Efficiency Inference Engine for Large Language Models*. GitHub repository. [https://github.com/TheTom/turboquant_plus](https://github.com/TheTom/turboquant_plus)
+2. *PolarQuant Algorithm*. ICLR 2026. (arXiv:2504.19874)
 
 ---
 

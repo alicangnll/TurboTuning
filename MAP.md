@@ -1,6 +1,6 @@
 # TurboTuning — Architectural Map
 
-This document describes the internal architecture of the two TurboTuning modules — **TurboQuant+** (KV cache compression) and **LLMTuning** (weight memory virtualization) — their data flows, concurrency model, and integration points.
+This document describes the internal architecture of the two TurboTuning modules — **TurboQuant+** [[1]](https://github.com/TheTom/turboquant_plus) (KV cache compression) and **LLMTuning** (weight memory virtualization) — their data flows, concurrency model, and integration points.
 
 ---
 
@@ -305,3 +305,10 @@ Use when the model fits in VRAM/RAM. Only KV memory is reduced.
 ```
 
 K uses turbo4 (higher fidelity dot product). V uses turbo2 (maximum output memory savings). Saves an additional ~15% compared to symmetric turbo4/turbo4.
+
+---
+
+## 7. References
+
+1. Turney, T. (2026). *TurboQuant+: Extreme-Efficiency Inference Engine for Large Language Models*. GitHub repository. [https://github.com/TheTom/turboquant_plus](https://github.com/TheTom/turboquant_plus)
+2. *PolarQuant Algorithm*. ICLR 2026. (arXiv:2504.19874)

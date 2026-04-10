@@ -8,7 +8,7 @@ This document outlines the development trajectory of the 2026 Engine, from its m
 **Focus**: Proving the Distortion-Rate bounds of PolarQuant.
 *Status: Completed*
 
-- [x] **PolarQuant Prototype**: Developed Python scripts to validate Walsh-Hadamard rotations and Beta-distribution quantization.
+- [x] **PolarQuant Prototype**: Developed Python scripts to validate Walsh-Hadamard rotations and Beta-distribution quantization [[2]](https://arxiv.org/abs/2504.19874).
 - [x] **Distortion Benchmarking**: Verified that 2-bit PolarQuant matches the performance of 4-bit standard scalar quantization.
 - [x] **Sparse V Theory**: Designed the attention-gating mechanism to skip Value-tensor dequantization for low-weight tokens.
 
@@ -71,3 +71,10 @@ This document outlines the development trajectory of the 2026 Engine, from its m
 
 > [!TIP]
 > **Contribute**: We welcome research papers and PRs focused on Walsh-Hadamard optimizations and memory paging strategies.
+
+---
+
+## 📚 References
+
+1. Turney, T. (2026). *TurboQuant+: Extreme-Efficiency Inference Engine for Large Language Models*. GitHub repository. [https://github.com/TheTom/turboquant_plus](https://github.com/TheTom/turboquant_plus)
+2. *PolarQuant Algorithm*. ICLR 2026. (arXiv:2504.19874)
