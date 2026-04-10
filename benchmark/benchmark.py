@@ -7,6 +7,13 @@ import platform
 import argparse
 from typing import Dict, Optional, List
 
+try:
+    import matplotlib.pyplot as plt
+    import numpy as np
+    MATPLOTLIB_AVAILABLE = True
+except ImportError:
+    MATPLOTLIB_AVAILABLE = False
+
 def get_time_cmd() -> List[str]:
     """Return the platform-specific wrapper command to measure memory usage."""
     if platform.system() == "Darwin":
@@ -53,11 +60,21 @@ def run_benchmark(name: str, cmd: List[str], env: dict) -> Dict[str, float]:
     prompt_eval_re = re.search(r"prompt eval time.*?=\s*[\d.]+\s*ms\s*/.*?,\s*([\d.]+)\s*tokens per second", output)
     if prompt_eval_re:
         results["prompt_eval_tokens_per_sec"] = float(prompt_eval_re.group(1))
+    else:
+        # Fallback to the interactive status indicator e.g. [ Prompt: 178.9 t/s | Generation: 19.5 t/s ]
+        prompt_alt_re = re.search(r"\[ Prompt:\s+([\d.]+)\s+t/s", output)
+        if prompt_alt_re:
+            results["prompt_eval_tokens_per_sec"] = float(prompt_alt_re.group(1))
 
     # e.g., llama_print_timings:        eval time =    1234.56 ms /    10 runs   (  123.45 ms per token,     8.10 tokens per second)
     eval_re = re.search(r"eval time.*?=\s*[\d.]+\s*ms\s*/.*?,\s*([\d.]+)\s*tokens per second", output)
     if eval_re:
         results["eval_tokens_per_sec"] = float(eval_re.group(1))
+    else:
+        # Fallback to the interactive status indicator e.g. [ Prompt: 178.9 t/s | Generation: 19.5 t/s ]
+        eval_alt_re = re.search(r"\|\s*Generation:\s+([\d.]+)\s+t/s", output)
+        if eval_alt_re:
+            results["eval_tokens_per_sec"] = float(eval_alt_re.group(1))
         
     # Parse memory sizes from llama log output to give fallback metrics
     calc_re = re.search(r"compute buffer total size =\s*([\d.]+)\s*MiB", output)
@@ -103,6 +120,59 @@ def print_results_table(all_results: Dict[str, Dict[str, float]], base_name: str
         
         print(f"{display_name:<25} | {base_str:<15} | {tt_str:<15}")
     print("="*60 + "\n")
+
+def plot_results(all_results: Dict[str, Dict[str, float]], base_name: str, tt_name: str):
+    if not MATPLOTLIB_AVAILABLE:
+        print("\nNote: 'matplotlib' is not installed. To generate a scientific graph, please run:")
+        print("  pip install matplotlib numpy")
+        print("and run this benchmark again.\n")
+        return
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+    
+    # --- Speed Chart ---
+    labels_speed = ['Prefill (t/s)', 'Generation (t/s)']
+    base_speed = [all_results[base_name].get('prompt_eval_tokens_per_sec', 0),
+                  all_results[base_name].get('eval_tokens_per_sec', 0)]
+    tt_speed = [all_results[tt_name].get('prompt_eval_tokens_per_sec', 0),
+                all_results[tt_name].get('eval_tokens_per_sec', 0)]
+                
+    x = np.arange(len(labels_speed))
+    width = 0.35
+    
+    ax1.bar(x - width/2, base_speed, width, label=base_name, color='#1f77b4', edgecolor='black')
+    ax1.bar(x + width/2, tt_speed, width, label=tt_name, color='#ff7f0e', edgecolor='black')
+    
+    ax1.set_ylabel('Tokens per Second (Higher is Better)')
+    ax1.set_title('Inference Speed Comparison')
+    ax1.set_xticks(x)
+    ax1.set_xticklabels(labels_speed)
+    ax1.legend()
+    ax1.grid(axis='y', linestyle='--', alpha=0.7)
+    
+    # --- Memory Chart ---
+    labels_mem = ['Peak Sys Mem (MB)']
+    # Fallback to compute buffer if max_rss_mb is missing
+    base_mem = [all_results[base_name].get('max_rss_mb') or all_results[base_name].get('llama_compute_buffer_mb', 0)]
+    tt_mem = [all_results[tt_name].get('max_rss_mb') or all_results[tt_name].get('llama_compute_buffer_mb', 0)]
+    
+    x_mem = np.arange(len(labels_mem))
+    ax2.bar(x_mem - width/2, base_mem, width, label=base_name, color='#1f77b4', edgecolor='black')
+    ax2.bar(x_mem + width/2, tt_mem, width, label=tt_name, color='#ff7f0e', edgecolor='black')
+    
+    ax2.set_ylabel('Memory in MB (Lower is Better)')
+    ax2.set_title('Memory Footprint Comparison')
+    ax2.set_xticks(x_mem)
+    ax2.set_xticklabels(labels_mem)
+    ax2.legend()
+    ax2.grid(axis='y', linestyle='--', alpha=0.7)
+    
+    plt.tight_layout()
+    plt.suptitle('TurboTuning vs Baseline Performance', y=1.05, fontsize=14, fontweight='bold')
+    
+    output_filename = "benchmark_results.png"
+    plt.savefig(output_filename, bbox_inches='tight', dpi=300)
+    print(f"=> Scientific benchmark graph successfully saved to: {output_filename}\n")
 
 def main():
     parser = argparse.ArgumentParser(description="TurboTuning vs Baseline Local Benchmark")
@@ -167,6 +237,7 @@ def main():
         all_results[name] = run_benchmark(name, cmd, env)
         
     print_results_table(all_results, baseline_key, tt_key)
+    plot_results(all_results, baseline_key, tt_key)
 
 if __name__ == "__main__":
     main()
