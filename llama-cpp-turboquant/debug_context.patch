@@ -1,0 +1,11 @@
+--- src/llama-context.cpp
++++ src/llama-context.cpp
+@@ -365,6 +365,8 @@
+ 
+     bool use_async = params.turbo_async || 
+                      params.type_k == GGML_TYPE_TURBO2_0 || params.type_k == GGML_TYPE_TURBO3_0 || params.type_k == GGML_TYPE_TURBO4_0 ||
+                      params.type_v == GGML_TYPE_TURBO2_0 || params.type_v == GGML_TYPE_TURBO3_0 || params.type_v == GGML_TYPE_TURBO4_0;
++    fprintf(stderr, "DEBUG: llama_context constructor: params.turbo_async=%d, type_k=%d, type_v=%d, use_async=%d\n", params.turbo_async, params.type_k, params.type_v, use_async);
++    LLAMA_LOG_INFO("DEBUG: LLAMA_LOG_INFO is working in llama_context\n");
+     if (!use_async) {
+         const char * env = getenv("TURBO_ASYNC_PIPELINE");
