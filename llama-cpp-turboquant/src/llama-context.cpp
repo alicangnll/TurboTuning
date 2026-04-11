@@ -439,11 +439,22 @@ void llama_context::sched_reserve() {
     const uint32_t n_seqs = cparams.n_seq_max;
     uint32_t n_tokens = std::min(cparams.n_ctx, cparams.n_ubatch);
 
-    // [ULTRA-LOW RAM] Shrink compute buffer reservation
-    char * ultra_low = getenv("TURBO_ULTRA_LOW_RAM");
-    if (ultra_low && atoi(ultra_low) == 1) {
-        // Capping to 128 tokens for reservation saves ~200MB compute buffer for small models
-        n_tokens = std::min(n_tokens, 128u);
+    // [ULTRA-LOW RAM] Shrink compute buffer reservation.
+    // TURBO_ULTRA_LOW_RAM=1  → cap at 128 tokens (~200 MB savings on 8B models)
+    // TURBO_RESERVE_TOKENS=N → override to exactly N tokens for maximum control.
+    //   Lower = less compute buffer memory, but prefill is processed in N-token chunks.
+    //   Minimum useful value is 32; below 32 some kernel tile assumptions may break.
+    {
+        const char * reserve_override = getenv("TURBO_RESERVE_TOKENS");
+        if (reserve_override) {
+            const uint32_t cap = (uint32_t)std::max(32, atoi(reserve_override));
+            n_tokens = std::min(n_tokens, cap);
+        } else {
+            const char * ultra_low = getenv("TURBO_ULTRA_LOW_RAM");
+            if (ultra_low && atoi(ultra_low) == 1) {
+                n_tokens = std::min(n_tokens, 128u);
+            }
+        }
     }
 
     const size_t max_nodes = this->graph_max_nodes(n_tokens);
